@@ -307,10 +307,15 @@ ConfigureNotifications(){
          LogInfo "${notification_type} server URL: ${gotify_server_url}"
          notification_url="https://${gotify_server_url}/message?token=${gotify_app_token}"
       elif [ "${notification_type}" = "Bark" ] && [ "${bark_device_key}" ] && [ "${bark_server}" ]; then
+      	 if [ "${bark_https}" = "True" ]; then
+            bark_scheme="https"
+         else
+            bark_scheme="http"
+         fi
          LogInfo "${notification_type} notifications enabled"
          LogInfo "${notification_type} device key: ${bark_device_key}"
          LogInfo "${notification_type} server: ${bark_server}"
-         notification_url="http://${bark_server}/push"
+         notification_url="bark_scheme://${bark_server}/push"
       else
          echo "$(date '+%Y-%m-%d %H:%M:%S') WARINING ${notification_type} notifications enabled, but configured incorrectly - disabling notifications"
          unset notification_type prowl_api_key pushover_user pushover_token telegram_token telegram_chat_id webhook_scheme webhook_server webhook_port webhook_id dingtalk_token discord_id discord_token iyuu_token wecom_id wecom_secret gotify_app_token gotify_server_url bark_device_key bark_server
@@ -941,7 +946,7 @@ Notify(){
       else
          bark_text="$(echo -e "${notification_message}")"
       fi
-      notification_result="$(curl --silent --output /dev/null --write-out "%{http_code}" "http://${bark_server}/push" \
+      notification_result="$(curl --silent --output /dev/null --write-out "%{http_code}" "${notification_url}" \
          -H 'Content-Type: application/json; charset=utf-8' \
          -d $"{ \"device_key\": \"${bark_device_key}\", \"title\": \"${notification_title}\", \"body\": \"${bark_text}\", \"category\": \"category\" }")"
    fi
